@@ -17,7 +17,7 @@ A significant engineering effort is planned to migrate the framework towards a m
 - **Communication Protocols:** Implementing efficient and reliable communication protocols between the microservices.
 - **Deployment and Monitoring:** Establishing automated deployment pipelines and comprehensive monitoring tools.
 
-### Distributed Research Automation (DRA) Experiment Integration
+### Digital Research Alliance (DRA) Experiment Integration
 
 We plan to integrate a comprehensive system for managing and analyzing DRA experiments. This will involve:
 
