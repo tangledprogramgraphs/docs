@@ -5,7 +5,7 @@
 <meta name="generator" content="Docusaurus v3.7.0">
 <title data-rh="true">Future Work | Tangled Program Graphs</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://tangledprogramgraphs.github.io/docs/img/docusaurus-social-card.jpg"><meta data-rh="true" name="twitter:image" content="https://tangledprogramgraphs.github.io/docs/img/docusaurus-social-card.jpg"><meta data-rh="true" property="og:url" content="https://tangledprogramgraphs.github.io/docs/future-work"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Future Work | Tangled Program Graphs"><meta data-rh="true" name="description" content="This page outlines the planned improvements and future directions for the Tangled Program Graphs framework. We welcome contributions and feedback on these initiatives."><meta data-rh="true" property="og:description" content="This page outlines the planned improvements and future directions for the Tangled Program Graphs framework. We welcome contributions and feedback on these initiatives."><link data-rh="true" rel="icon" href="/docs/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://tangledprogramgraphs.github.io/docs/future-work"><link data-rh="true" rel="alternate" href="https://tangledprogramgraphs.github.io/docs/future-work" hreflang="en"><link data-rh="true" rel="alternate" href="https://tangledprogramgraphs.github.io/docs/future-work" hreflang="x-default"><link rel="alternate" type="application/rss+xml" href="/docs/blog/rss.xml" title="Tangled Program Graphs RSS Feed">
 <link rel="alternate" type="application/atom+xml" href="/docs/blog/atom.xml" title="Tangled Program Graphs Atom Feed"><link rel="stylesheet" href="/docs/assets/css/styles.55bf68d4.css">
-<script src="/docs/assets/js/runtime~main.bbbb6a9f.js" defer="defer"></script>
+<script src="/docs/assets/js/runtime~main.c37e82cf.js" defer="defer"></script>
 <script src="/docs/assets/js/main.9b7ddc71.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -13,15 +13,54 @@
 <p>This page outlines the planned improvements and future directions for the Tangled Program Graphs framework. We welcome contributions and feedback on these initiatives.</p>
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="system-architecture-and-infrastructure">System Architecture and Infrastructure<a href="#system-architecture-and-infrastructure" class="hash-link" aria-label="Direct link to System Architecture and Infrastructure" title="Direct link to System Architecture and Infrastructure">​</a></h2>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="microservices-orchestration">Microservices Orchestration<a href="#microservices-orchestration" class="hash-link" aria-label="Direct link to Microservices Orchestration" title="Direct link to Microservices Orchestration">​</a></h3>
-<p>A significant engineering effort is planned to migrate the framework towards a microservices architecture. This involves decoupling components like the API, CLI, C++ Framework core, and Web Application (Playground) into independently deployable services. Key challenges include:</p>
+<p>The framework is being restructured into a service-oriented architecture with clear separation of concerns. The current architecture looks like this:</p>
+<p><img decoding="async" loading="lazy" alt="Current Architecture: API wraps CLI commands, which then wrap mpirun commands to execute C++ binaries compiled from the engine" src="/docs/assets/images/current-arch-9822de3a1b37a77ffe4db5a31337edab.png" width="946" height="466" class="img_ev3q"></p>
+<p>This architecture represents a significant migration from the current implementation where the API wraps CLI commands. The new design:</p>
 <ul>
-<li><strong>Dependency Management:</strong> Orchestrating dependencies between the services, especially given the CLI&#x27;s dependency on the C++ binaries and the API&#x27;s reliance on the CLI.</li>
-<li><strong>Scalability and Resilience:</strong> Designing a scalable and resilient architecture capable of handling increasing user load and complex experiment workflows.</li>
-<li><strong>Communication Protocols:</strong> Implementing efficient and reliable communication protocols between the microservices.</li>
-<li><strong>Deployment and Monitoring:</strong> Establishing automated deployment pipelines and comprehensive monitoring tools.</li>
+<li>Eliminates the CLI dependency in the API service</li>
+<li>Enables direct interaction with C++ binaries</li>
+<li>Improves performance by removing unnecessary process spawning</li>
+<li>Reduces complexity in the API service implementation</li>
+</ul>
+<p>The planned architecture reorganizes these components into:</p>
+<p><img decoding="async" loading="lazy" alt="Planned Architecture: Framework repository contains engine, binaries, and API service. CLI communicates via network requests" src="/docs/assets/images/planned-arch-d03172e88a866cd691876d9971c94e69.png" width="1060" height="338" class="img_ev3q"></p>
+<ul>
+<li><strong><a href="https://github.com/TangledProgramGraphs/framework" target="_blank" rel="noopener noreferrer">Framework Repository</a>:</strong> Contains the C++ engine code, build system, and API service. This unified repository produces both the C++ binaries and the API service that directly interfaces with them.</li>
+<li><strong><a href="https://github.com/TangledProgramGraphs/cli" target="_blank" rel="noopener noreferrer">CLI Repository</a>:</strong> A Python-based command-line interface distributed as a pip package. The CLI communicates with the API service via HTTP requests (e.g., <code>tpg evolve &lt;env&gt;</code> triggers a POST to <code>your-service-url/evolve</code>).</li>
+<li><strong>API Service:</strong> Acts as an intermediary service that supports multiple execution modes:<!-- -->
+<ul>
+<li><strong>Live-Streaming Mode:</strong> Used by web clients (e.g., Playground) to receive real-time updates via WebSocket connections</li>
+<li><strong>Non Live-Streaming Mode:</strong> Used by the CLI for batch processing and non-interactive tasks</li>
+<li><strong>Business Logic</strong>:<!-- -->
+<ul>
+<li>Routes requests to the appropriate build mode based on the client type</li>
+<li>Executes C++ binaries on the server</li>
+<li>Manages WebSocket connections for live-streaming clients</li>
+<li>Returns results to clients</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>This architecture decouples the CLI from the engine&#x27;s execution environment, enabling:</p>
+<ul>
+<li>Independent distribution of the CLI package</li>
+<li>Remote execution of computationally intensive tasks</li>
+<li>Scalable deployment of the API service</li>
+<li>Clear separation of concerns between components</li>
+<li>Flexible execution modes for different client types</li>
+</ul>
+<p>Key implementation challenges include:</p>
+<ul>
+<li>Managing service dependencies and versioning</li>
+<li>Ensuring reliable communication between components</li>
+<li>Implementing robust error handling and monitoring</li>
+<li>Maintaining security across service boundaries</li>
+<li>Coordinating different build modes and their respective client interactions</li>
+<li>Migrating existing API endpoints from CLI command wrapping to direct binary interaction</li>
 </ul>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="digital-research-alliance-dra-experiment-integration">Digital Research Alliance (DRA) Experiment Integration<a href="#digital-research-alliance-dra-experiment-integration" class="hash-link" aria-label="Direct link to Digital Research Alliance (DRA) Experiment Integration" title="Direct link to Digital Research Alliance (DRA) Experiment Integration">​</a></h3>
-<p>We plan to integrate a comprehensive system for managing and analyzing DRA experiments. This will involve:</p>
+<p>We plan to integrate a comprehensive system for managing and analyzing DRA experiments within <a href="https://github.com/TangledProgramGraphs/playground" target="_blank" rel="noopener noreferrer">TPG Playground</a>. This will involve:</p>
 <ul>
 <li><strong>Automated Experiment Data Upload:</strong> Implementing automated data upload to a centralized database after each DRA experiment is completed (either automatically or manually triggered via the CLI).</li>
 <li><strong>Experiment Database:</strong> Developing a robust database schema to store experiment metadata, results, configurations, and environment seeds.</li>
@@ -38,8 +77,7 @@
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="gpu-acceleration">GPU Acceleration<a href="#gpu-acceleration" class="hash-link" aria-label="Direct link to GPU Acceleration" title="Direct link to GPU Acceleration">​</a></h3>
 <p>Continued research and investigation into leveraging GPUs to significantly improve framework performance, focusing on:</p>
 <ul>
-<li><strong>Parallel Evaluation:</strong> Implementing GPU-accelerated parallel evaluation of TPG agents to reduce training time.</li>
-<li><strong>Kernel Optimization:</strong> Developing optimized GPU kernels for key TPG operations.</li>
+<li><strong>Parallel Evaluation:</strong> Implementing GPU-accelerated parallel evaluation of TPG agents to optimize evolution time.</li>
 <li><strong>Memory Management:</strong> Optimizing memory transfer and management between CPU and GPU.</li>
 </ul>
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="algorithm-improvements-and-multi-task-learning">Algorithm Improvements and Multi-Task Learning<a href="#algorithm-improvements-and-multi-task-learning" class="hash-link" aria-label="Direct link to Algorithm Improvements and Multi-Task Learning" title="Direct link to Algorithm Improvements and Multi-Task Learning">​</a></h2>
@@ -47,50 +85,6 @@
 <ul>
 <li><strong>Novel GP Approaches:</strong> Investigating alternative genetic programming approaches to boost the diversity, specialization, and competition of components within MTRL-TPG.</li>
 <li><strong>Selection and Mutation Improvements:</strong> Enhance selection and mutation strategies to make the algorithms smarter in determining convergence rate.</li>
-</ul>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="core-framework">Core Framework<a href="#core-framework" class="hash-link" aria-label="Direct link to Core Framework" title="Direct link to Core Framework">​</a></h3>
-<ul>
-<li>Optimization of parallel execution in MPI implementation</li>
-<li>Enhanced memory management for large-scale experiments</li>
-<li>Improved logging and debugging capabilities</li>
-<li>Extended support for custom environment configurations</li>
-</ul>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="mujoco-integration">MuJoCo Integration<a href="#mujoco-integration" class="hash-link" aria-label="Direct link to MuJoCo Integration" title="Direct link to MuJoCo Integration">​</a></h3>
-<ul>
-<li>Support for additional MuJoCo environments</li>
-<li>Enhanced visualization capabilities for policy debugging</li>
-<li>Real-time policy visualization improvements</li>
-<li>Integration with newer MuJoCo versions as they become available</li>
-</ul>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="developer-tools">Developer Tools<a href="#developer-tools" class="hash-link" aria-label="Direct link to Developer Tools" title="Direct link to Developer Tools">​</a></h2>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="playground-web-application">Playground Web Application<a href="#playground-web-application" class="hash-link" aria-label="Direct link to Playground Web Application" title="Direct link to Playground Web Application">​</a></h3>
-<ul>
-<li>Enhanced real-time experiment monitoring</li>
-<li>Interactive policy visualization tools</li>
-<li>Improved experiment comparison interface</li>
-<li>Extended debugging capabilities</li>
-</ul>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="cli-improvements">CLI Improvements<a href="#cli-improvements" class="hash-link" aria-label="Direct link to CLI Improvements" title="Direct link to CLI Improvements">​</a></h3>
-<ul>
-<li>Additional automation scripts for common workflows</li>
-<li>Enhanced experiment management features</li>
-<li>Improved data export capabilities</li>
-<li>Better integration with external analysis tools</li>
-</ul>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="documentation-and-community">Documentation and Community<a href="#documentation-and-community" class="hash-link" aria-label="Direct link to Documentation and Community" title="Direct link to Documentation and Community">​</a></h2>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="documentation">Documentation<a href="#documentation" class="hash-link" aria-label="Direct link to Documentation" title="Direct link to Documentation">​</a></h3>
-<ul>
-<li>Expanded tutorials and examples</li>
-<li>More comprehensive API documentation</li>
-<li>Additional guides for common use cases</li>
-<li>Better troubleshooting guides</li>
-</ul>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="community-support">Community Support<a href="#community-support" class="hash-link" aria-label="Direct link to Community Support" title="Direct link to Community Support">​</a></h3>
-<ul>
-<li>Enhanced contribution guidelines</li>
-<li>Community showcase section</li>
-<li>Regular release notes and updates</li>
-<li>Improved issue templates and documentation</li>
 </ul>
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="get-involved">Get Involved<a href="#get-involved" class="hash-link" aria-label="Direct link to Get Involved" title="Direct link to Get Involved">​</a></h2>
 <p>We welcome contributions from the community! If you&#x27;re interested in working on any of these areas or have suggestions for additional improvements, please:</p>
@@ -100,6 +94,6 @@
 <li>Join our community discussions</li>
 <li>Submit pull requests with your improvements</li>
 </ol>
-<p>This roadmap is continuously evolving, and we welcome feedback and suggestions from our user community.</p></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col"><a href="https://github.com/tangledprogramgraphs/docs/tree/main/docs/future-work.md" target="_blank" rel="noopener noreferrer" class="theme-edit-this-page"><svg fill="currentColor" height="20" width="20" viewBox="0 0 40 40" class="iconEdit_Z9Sw" aria-hidden="true"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div><div class="col lastUpdated_JAkA"></div></div></footer></article><nav class="pagination-nav docusaurus-mt-lg" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/docs/guides/dra"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">DRA Experiment Execution</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#system-architecture-and-infrastructure" class="table-of-contents__link toc-highlight">System Architecture and Infrastructure</a><ul><li><a href="#microservices-orchestration" class="table-of-contents__link toc-highlight">Microservices Orchestration</a></li><li><a href="#digital-research-alliance-dra-experiment-integration" class="table-of-contents__link toc-highlight">Digital Research Alliance (DRA) Experiment Integration</a></li></ul></li><li><a href="#performance-optimization" class="table-of-contents__link toc-highlight">Performance Optimization</a><ul><li><a href="#gpu-acceleration" class="table-of-contents__link toc-highlight">GPU Acceleration</a></li></ul></li><li><a href="#algorithm-improvements-and-multi-task-learning" class="table-of-contents__link toc-highlight">Algorithm Improvements and Multi-Task Learning</a><ul><li><a href="#multi-task-learning-enhancements" class="table-of-contents__link toc-highlight">Multi-Task Learning Enhancements</a></li><li><a href="#core-framework" class="table-of-contents__link toc-highlight">Core Framework</a></li><li><a href="#mujoco-integration" class="table-of-contents__link toc-highlight">MuJoCo Integration</a></li></ul></li><li><a href="#developer-tools" class="table-of-contents__link toc-highlight">Developer Tools</a><ul><li><a href="#playground-web-application" class="table-of-contents__link toc-highlight">Playground Web Application</a></li><li><a href="#cli-improvements" class="table-of-contents__link toc-highlight">CLI Improvements</a></li></ul></li><li><a href="#documentation-and-community" class="table-of-contents__link toc-highlight">Documentation and Community</a><ul><li><a href="#documentation" class="table-of-contents__link toc-highlight">Documentation</a></li><li><a href="#community-support" class="table-of-contents__link toc-highlight">Community Support</a></li></ul></li><li><a href="#get-involved" class="table-of-contents__link toc-highlight">Get Involved</a></li></ul></div></div></div></div></main></div></div></div></div>
+<p>This roadmap is continuously evolving, and we welcome feedback and suggestions from our user community.</p></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col"><a href="https://github.com/tangledprogramgraphs/docs/tree/main/docs/future-work.md" target="_blank" rel="noopener noreferrer" class="theme-edit-this-page"><svg fill="currentColor" height="20" width="20" viewBox="0 0 40 40" class="iconEdit_Z9Sw" aria-hidden="true"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div><div class="col lastUpdated_JAkA"></div></div></footer></article><nav class="pagination-nav docusaurus-mt-lg" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/docs/guides/dra"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">DRA Experiment Execution</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#system-architecture-and-infrastructure" class="table-of-contents__link toc-highlight">System Architecture and Infrastructure</a><ul><li><a href="#microservices-orchestration" class="table-of-contents__link toc-highlight">Microservices Orchestration</a></li><li><a href="#digital-research-alliance-dra-experiment-integration" class="table-of-contents__link toc-highlight">Digital Research Alliance (DRA) Experiment Integration</a></li></ul></li><li><a href="#performance-optimization" class="table-of-contents__link toc-highlight">Performance Optimization</a><ul><li><a href="#gpu-acceleration" class="table-of-contents__link toc-highlight">GPU Acceleration</a></li></ul></li><li><a href="#algorithm-improvements-and-multi-task-learning" class="table-of-contents__link toc-highlight">Algorithm Improvements and Multi-Task Learning</a><ul><li><a href="#multi-task-learning-enhancements" class="table-of-contents__link toc-highlight">Multi-Task Learning Enhancements</a></li></ul></li><li><a href="#get-involved" class="table-of-contents__link toc-highlight">Get Involved</a></li></ul></div></div></div></div></main></div></div></div></div>
 </body>
 </html>
