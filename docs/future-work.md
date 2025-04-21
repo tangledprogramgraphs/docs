@@ -10,16 +10,52 @@ This page outlines the planned improvements and future directions for the Tangle
 
 ### Microservices Orchestration
 
-A significant engineering effort is planned to migrate the framework towards a microservices architecture. This involves decoupling components like the API, CLI, C++ Framework core, and Web Application (Playground) into independently deployable services. Key challenges include:
+The framework is being restructured into a service-oriented architecture with clear separation of concerns. The current architecture looks like this:
 
-- **Dependency Management:** Orchestrating dependencies between the services, especially given the CLI's dependency on the C++ binaries and the API's reliance on the CLI.
-- **Scalability and Resilience:** Designing a scalable and resilient architecture capable of handling increasing user load and complex experiment workflows.
-- **Communication Protocols:** Implementing efficient and reliable communication protocols between the microservices.
-- **Deployment and Monitoring:** Establishing automated deployment pipelines and comprehensive monitoring tools.
+![Current Architecture: API wraps CLI commands, which then wrap mpirun commands to execute C++ binaries compiled from the engine](/img/current-arch.png)
+
+This architecture represents a significant migration from the current implementation where the API wraps CLI commands. The new design:
+
+- Eliminates the CLI dependency in the API service
+- Enables direct interaction with C++ binaries
+- Improves performance by removing unnecessary process spawning
+- Reduces complexity in the API service implementation
+
+The planned architecture reorganizes these components into:
+
+![Planned Architecture: Framework repository contains engine, binaries, and API service. CLI communicates via network requests](/img/planned-arch.png)
+
+- **[Framework Repository](https://github.com/TangledProgramGraphs/framework):** Contains the C++ engine code, build system, and API service. This unified repository produces both the C++ binaries and the API service that directly interfaces with them.
+- **[CLI Repository](https://github.com/TangledProgramGraphs/cli):** A Python-based command-line interface distributed as a pip package. The CLI communicates with the API service via HTTP requests (e.g., `tpg evolve <env>` triggers a POST to `your-service-url/evolve`).
+- **API Service:** Acts as an intermediary service that supports multiple execution modes:
+  - **Live-Streaming Mode:** Used by web clients (e.g., Playground) to receive real-time updates via WebSocket connections
+  - **Non Live-Streaming Mode:** Used by the CLI for batch processing and non-interactive tasks
+  - **Business Logic**:
+    - Routes requests to the appropriate build mode based on the client type
+    - Executes C++ binaries on the server
+    - Manages WebSocket connections for live-streaming clients
+    - Returns results to clients
+
+This architecture decouples the CLI from the engine's execution environment, enabling:
+
+- Independent distribution of the CLI package
+- Remote execution of computationally intensive tasks
+- Scalable deployment of the API service
+- Clear separation of concerns between components
+- Flexible execution modes for different client types
+
+Key implementation challenges include:
+
+- Managing service dependencies and versioning
+- Ensuring reliable communication between components
+- Implementing robust error handling and monitoring
+- Maintaining security across service boundaries
+- Coordinating different build modes and their respective client interactions
+- Migrating existing API endpoints from CLI command wrapping to direct binary interaction
 
 ### Digital Research Alliance (DRA) Experiment Integration
 
-We plan to integrate a comprehensive system for managing and analyzing DRA experiments. This will involve:
+We plan to integrate a comprehensive system for managing and analyzing DRA experiments within [TPG Playground](https://github.com/TangledProgramGraphs/playground). This will involve:
 
 - **Automated Experiment Data Upload:** Implementing automated data upload to a centralized database after each DRA experiment is completed (either automatically or manually triggered via the CLI).
 - **Experiment Database:** Developing a robust database schema to store experiment metadata, results, configurations, and environment seeds.
@@ -36,8 +72,7 @@ This DRA integration is a substantial engineering undertaking that will greatly 
 
 Continued research and investigation into leveraging GPUs to significantly improve framework performance, focusing on:
 
-- **Parallel Evaluation:** Implementing GPU-accelerated parallel evaluation of TPG agents to reduce training time.
-- **Kernel Optimization:** Developing optimized GPU kernels for key TPG operations.
+- **Parallel Evaluation:** Implementing GPU-accelerated parallel evaluation of TPG agents to optimize evolution time.
 - **Memory Management:** Optimizing memory transfer and management between CPU and GPU.
 
 ## Algorithm Improvements and Multi-Task Learning
@@ -46,52 +81,6 @@ Continued research and investigation into leveraging GPUs to significantly impro
 
 - **Novel GP Approaches:** Investigating alternative genetic programming approaches to boost the diversity, specialization, and competition of components within MTRL-TPG.
 - **Selection and Mutation Improvements:** Enhance selection and mutation strategies to make the algorithms smarter in determining convergence rate.
-
-### Core Framework
-
-- Optimization of parallel execution in MPI implementation
-- Enhanced memory management for large-scale experiments
-- Improved logging and debugging capabilities
-- Extended support for custom environment configurations
-
-### MuJoCo Integration
-
-- Support for additional MuJoCo environments
-- Enhanced visualization capabilities for policy debugging
-- Real-time policy visualization improvements
-- Integration with newer MuJoCo versions as they become available
-
-## Developer Tools
-
-### Playground Web Application
-
-- Enhanced real-time experiment monitoring
-- Interactive policy visualization tools
-- Improved experiment comparison interface
-- Extended debugging capabilities
-
-### CLI Improvements
-
-- Additional automation scripts for common workflows
-- Enhanced experiment management features
-- Improved data export capabilities
-- Better integration with external analysis tools
-
-## Documentation and Community
-
-### Documentation
-
-- Expanded tutorials and examples
-- More comprehensive API documentation
-- Additional guides for common use cases
-- Better troubleshooting guides
-
-### Community Support
-
-- Enhanced contribution guidelines
-- Community showcase section
-- Regular release notes and updates
-- Improved issue templates and documentation
 
 ## Get Involved
 
