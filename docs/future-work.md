@@ -27,6 +27,12 @@ The planned architecture reorganizes these components into:
 
 - **[Framework Repository](https://github.com/TangledProgramGraphs/framework):** Contains the C++ engine code, build system, and API service. This unified repository produces both the C++ binaries and the API service that directly interfaces with them.
 - **[CLI Repository](https://github.com/TangledProgramGraphs/cli):** A Python-based command-line interface distributed as a pip package. The CLI communicates with the API service via HTTP requests (e.g., `tpg evolve <env>` triggers a POST to `your-service-url/evolve`).
+  For guidance on CLI code organization, refer to [authed-identity CLI](https://github.com/authed-dev/authed-identity/tree/main/authed/cli) which demonstrates a clean separation of:
+
+  - `commands/` - Individual command implementations
+  - `utils/` - Shared utilities and helpers
+  - Core CLI setup and configuration files
+
 - **API Service:** Acts as an intermediary service that supports multiple execution modes:
   - **Live-Streaming Mode:** Used by web clients (e.g., Playground) to receive real-time updates via WebSocket connections
   - **Non Live-Streaming Mode:** Used by the CLI for batch processing and non-interactive tasks
