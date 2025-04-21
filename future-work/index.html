@@ -5,7 +5,7 @@
 <meta name="generator" content="Docusaurus v3.7.0">
 <title data-rh="true">Future Work | Tangled Program Graphs</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://tangledprogramgraphs.github.io/docs/img/docusaurus-social-card.jpg"><meta data-rh="true" name="twitter:image" content="https://tangledprogramgraphs.github.io/docs/img/docusaurus-social-card.jpg"><meta data-rh="true" property="og:url" content="https://tangledprogramgraphs.github.io/docs/future-work"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Future Work | Tangled Program Graphs"><meta data-rh="true" name="description" content="This page outlines the planned improvements and future directions for the Tangled Program Graphs framework. We welcome contributions and feedback on these initiatives."><meta data-rh="true" property="og:description" content="This page outlines the planned improvements and future directions for the Tangled Program Graphs framework. We welcome contributions and feedback on these initiatives."><link data-rh="true" rel="icon" href="/docs/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://tangledprogramgraphs.github.io/docs/future-work"><link data-rh="true" rel="alternate" href="https://tangledprogramgraphs.github.io/docs/future-work" hreflang="en"><link data-rh="true" rel="alternate" href="https://tangledprogramgraphs.github.io/docs/future-work" hreflang="x-default"><link rel="alternate" type="application/rss+xml" href="/docs/blog/rss.xml" title="Tangled Program Graphs RSS Feed">
 <link rel="alternate" type="application/atom+xml" href="/docs/blog/atom.xml" title="Tangled Program Graphs Atom Feed"><link rel="stylesheet" href="/docs/assets/css/styles.55bf68d4.css">
-<script src="/docs/assets/js/runtime~main.c37e82cf.js" defer="defer"></script>
+<script src="/docs/assets/js/runtime~main.f74fd909.js" defer="defer"></script>
 <script src="/docs/assets/js/main.9b7ddc71.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -25,9 +25,20 @@
 <p>The planned architecture reorganizes these components into:</p>
 <p><img decoding="async" loading="lazy" alt="Planned Architecture: Framework repository contains engine, binaries, and API service. CLI communicates via network requests" src="/docs/assets/images/planned-arch-d03172e88a866cd691876d9971c94e69.png" width="1060" height="338" class="img_ev3q"></p>
 <ul>
-<li><strong><a href="https://github.com/TangledProgramGraphs/framework" target="_blank" rel="noopener noreferrer">Framework Repository</a>:</strong> Contains the C++ engine code, build system, and API service. This unified repository produces both the C++ binaries and the API service that directly interfaces with them.</li>
-<li><strong><a href="https://github.com/TangledProgramGraphs/cli" target="_blank" rel="noopener noreferrer">CLI Repository</a>:</strong> A Python-based command-line interface distributed as a pip package. The CLI communicates with the API service via HTTP requests (e.g., <code>tpg evolve &lt;env&gt;</code> triggers a POST to <code>your-service-url/evolve</code>).</li>
-<li><strong>API Service:</strong> Acts as an intermediary service that supports multiple execution modes:<!-- -->
+<li>
+<p><strong><a href="https://github.com/TangledProgramGraphs/framework" target="_blank" rel="noopener noreferrer">Framework Repository</a>:</strong> Contains the C++ engine code, build system, and API service. This unified repository produces both the C++ binaries and the API service that directly interfaces with them.</p>
+</li>
+<li>
+<p><strong><a href="https://github.com/TangledProgramGraphs/cli" target="_blank" rel="noopener noreferrer">CLI Repository</a>:</strong> A Python-based command-line interface distributed as a pip package. The CLI communicates with the API service via HTTP requests (e.g., <code>tpg evolve &lt;env&gt;</code> triggers a POST to <code>your-service-url/evolve</code>).
+For guidance on CLI code organization, refer to <a href="https://github.com/authed-dev/authed-identity/tree/main/authed/cli" target="_blank" rel="noopener noreferrer">authed-identity CLI</a> which demonstrates a clean separation of:</p>
+<ul>
+<li><code>commands/</code> - Individual command implementations</li>
+<li><code>utils/</code> - Shared utilities and helpers</li>
+<li>Core CLI setup and configuration files</li>
+</ul>
+</li>
+<li>
+<p><strong>API Service:</strong> Acts as an intermediary service that supports multiple execution modes:</p>
 <ul>
 <li><strong>Live-Streaming Mode:</strong> Used by web clients (e.g., Playground) to receive real-time updates via WebSocket connections</li>
 <li><strong>Non Live-Streaming Mode:</strong> Used by the CLI for batch processing and non-interactive tasks</li>
